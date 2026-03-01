@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { seedCategoriasGasto } from '../src/modules/categoria-gasto/categoria-gasto.seed'
+import { seedCategoriasGasto } from '../modules/categoria-gasto/categoria-gasto.seed'
 
 const prisma = new PrismaClient()
 
