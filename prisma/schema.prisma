@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id        String   @id
+  nome      String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+
+  clientes      Cliente[]
+  mensalidades  Mensalidade[]
+  pagamentos    Pagamento[]
+  receitas      Receita[]
+  gastos        Gasto[]
+}
+
+model Cliente {
+  id        String   @id @default(uuid())
+  userId    String
+  nome      String
+  email     String?
+  telefone  String?
+  status    String
+  createdAt DateTime @default(now())
+
+  user Profile @relation(fields: [userId], references: [id])
+  mensalidades Mensalidade[]
+  pagamentos   Pagamento[]
+  dividas       DividaPrivada[]
+}
+
+model Mensalidade {
+  id            String   @id @default(uuid())
+  userId        String
+  clienteId     String
+  valor         Float
+  diaVencimento Int
+  status        String
+  dataInicio    DateTime
+
+  user     Profile @relation(fields: [userId], references: [id])
+  cliente  Cliente @relation(fields: [clienteId], references: [id])
+}
+
+model Pagamento {
+  id            String   @id @default(uuid())
+  clienteId     String
+  userId        String
+  mesReferencia DateTime
+  valor         Float
+  status        PagamentoStatus
+  pagoEm        DateTime?
+
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+  user    Profile @relation(fields: [userId], references: [id])
+
+  @@unique([clienteId, mesReferencia])
+}
+
+enum PagamentoStatus {
+  PENDENTE
+  PAGO
+}
+
+model Receita {
+  id        String   @id @default(uuid())
+  userId    String
+  descricao String
+  valor     Float
+  data      DateTime
+  categoria String
+
+  user Profile @relation(fields: [userId], references: [id])
+}
+
+model Gasto {
+  id            String   @id @default(uuid())
+  userId        String
+  categoriaId   String
+  valor         Float
+  descricao     String?
+  dataGasto     DateTime
+  criadoPor     String
+  createdAt     DateTime @default(now())
+
+  categoria CategoriaGasto @relation(fields: [categoriaId], references: [id])
+  user      Profile        @relation(fields: [userId], references: [id])
+}
+
+model MensalidadeValor {
+  id        String   @id @default(uuid())
+  valor     Float
+  inicioMes DateTime
+  fimMes    DateTime?
+  createdAt DateTime @default(now())
+}
+
+model CategoriaGasto {
+  id        String   @id @default(uuid())
+  nome      String
+  createdAt DateTime @default(now())
+
+  gastos    Gasto[]
+}
+
+model DividaPrivada {
+  id          String   @id @default(uuid())
+  clienteId   String
+  valorTotal  Float
+  descricao   String
+  status      DividaStatus @default(ABERTA)
+  createdAt   DateTime @default(now())
+
+  pagamentos  PagamentoDivida[]
+  cliente     Cliente @relation(fields: [clienteId], references: [id])
+}
+
+model PagamentoDivida {
+  id        String   @id @default(uuid())
+  dividaId  String
+  valor     Float
+  dataPago  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  divida    DividaPrivada @relation(fields: [dividaId], references: [id])
+}
+enum DividaStatus {
+  ABERTA
+  QUITADA
+}
+
+enum Role {
+  ADMIN
+  USER
+}
